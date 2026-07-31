@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vento — Agendamento</title>
+<link rel="icon" type="image/x-icon" href="https://raw.githubusercontent.com/fii-plataform/Forms-consulta/main/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#0b1220;
+    --bg-2:#0e1830;
+    --teal:#1f9e93;
+    --indigo:#3b5bdb;
+    --sand:#e8c468;
+    --glass:rgba(255,255,255,0.06);
+    --glass-border:rgba(255,255,255,0.14);
+    --text:#f5f7fa;
+    --text-muted:#9fb0c3;
+    --error:#e8747b;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{
+    margin:0;
+    min-height:100vh;
+    background:var(--bg-1);
+    font-family:'Inter',sans-serif;
+    color:var(--text);
+  }
+
+  body{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    overflow-x:hidden;
+  }
+
+  /* ---------- fundo com blobs orgânicos ---------- */
+  .blob{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(70px);
+    opacity:0.55;
+    pointer-events:none;
+    z-index:0;
+  }
+  .blob-1{
+    width:480px;height:480px;
+    background:radial-gradient(circle at 30% 30%, var(--teal), transparent 70%);
+    top:-160px; left:-140px;
+    animation:drift1 22s ease-in-out infinite;
+  }
+  .blob-2{
+    width:420px;height:420px;
+    background:radial-gradient(circle at 60% 40%, var(--indigo), transparent 70%);
+    bottom:-180px; right:-120px;
+    animation:drift2 26s ease-in-out infinite;
+  }
+  .blob-3{
+    width:220px;height:220px;
+    background:radial-gradient(circle, var(--sand), transparent 70%);
+    top:60%; left:8%;
+    opacity:0.25;
+    animation:drift1 18s ease-in-out infinite reverse;
+  }
+
+  @keyframes drift1{
+    0%,100%{ transform:translate(0,0); }
+    50%{ transform:translate(30px,40px); }
+  }
+  @keyframes drift2{
+    0%,100%{ transform:translate(0,0); }
+    50%{ transform:translate(-40px,-20px); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .blob{ animation:none !important; }
+  }
+
+  /* ---------- card de vidro ---------- */
+  .card{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:440px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    border-radius:28px;
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    padding:40px 36px 32px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,0.6);
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:28px;
+  }
+
+  .brand svg{ width:34px; height:20px; }
+
+  .brand-name{
+    font-family:'Fraunces', serif;
+    font-size:17px;
+    letter-spacing:0.02em;
+  }
+
+  .wave-path{
+    stroke-dasharray:120;
+    stroke-dashoffset:120;
+    animation:draw 1.4s ease forwards 0.2s;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .wave-path{ animation:none; stroke-dashoffset:0; }
+  }
+  @keyframes draw{
+    to{ stroke-dashoffset:0; }
+  }
+
+  .eyebrow{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.14em;
+    color:var(--text-muted);
+    margin:0 0 8px;
+  }
+
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:28px;
+    line-height:1.2;
+    margin:0 0 10px;
+  }
+  h1 em{
+    font-style:italic;
+    color:var(--teal);
+  }
+
+  .subcopy{
+    font-size:14px;
+    color:var(--text-muted);
+    line-height:1.5;
+    margin:0 0 28px;
+  }
+
+  form{ display:flex; flex-direction:column; gap:18px; }
+
+  .field{ display:flex; flex-direction:column; gap:6px; }
+
+  .field label{
+    font-size:13px;
+    font-weight:500;
+    color:var(--text-muted);
+  }
+
+  .field-row{ display:flex; gap:12px; }
+  .field-row .field{ flex:1; min-width:0; }
+
+  input{
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    padding:12px 14px;
+    color:var(--text);
+    font-size:15px;
+    font-family:inherit;
+    outline:none;
+    transition:border-color .15s ease, background .15s ease;
+    color-scheme:dark;
+  }
+  input::placeholder{ color:rgba(159,176,195,0.55); }
+  input:focus{
+    border-color:var(--teal);
+    background:rgba(255,255,255,0.08);
+  }
+  input:invalid:not(:placeholder-shown):not(:focus){
+    border-color:var(--error);
+  }
+
+  .helper{
+    font-size:12px;
+    color:var(--text-muted);
+    margin-top:2px;
+  }
+
+  .error-msg{
+    font-size:12.5px;
+    color:var(--error);
+    min-height:16px;
+    margin:0;
+  }
+
+  /* honeypot — invisível para humanos, visível para bots */
+  .hp-field{
+    position:absolute;
+    left:-9999px;
+    width:1px;
+    height:1px;
+    overflow:hidden;
+  }
+
+  button{
+    margin-top:8px;
+    border:none;
+    border-radius:14px;
+    padding:14px 20px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:600;
+    color:#0b1220;
+    background:linear-gradient(135deg, var(--teal), #2fbfae);
+    cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+  }
+  button:hover{ transform:translateY(-1px); box-shadow:0 12px 24px -12px rgba(31,158,147,0.6); }
+  button:active{ transform:translateY(0); }
+  button:disabled{ opacity:0.6; cursor:not-allowed; transform:none; box-shadow:none; }
+  button:focus-visible{ outline:2px solid var(--sand); outline-offset:2px; }
+
+  .form-status{
+    font-size:13px;
+    text-align:center;
+    min-height:18px;
+    color:var(--error);
+  }
+
+  /* ---------- estado de sucesso ---------- */
+  .success{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    gap:14px;
+    padding:12px 4px 4px;
+  }
+  .success.visible{ display:flex; }
+  form.hidden{ display:none; }
+
+  .check{
+    width:52px;height:52px;
+    border-radius:50%;
+    background:rgba(31,158,147,0.16);
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  .success h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:22px;
+    margin:0;
+  }
+  .success p{
+    font-size:14px;
+    color:var(--text-muted);
+    margin:0;
+    line-height:1.5;
+  }
+
+  @media (max-width:420px){
+    .card{ padding:32px 22px 26px; border-radius:22px; }
+    h1{ font-size:24px; }
+    .field-row{ flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="card">
+
+  <div class="brand">
+    <img src="https://raw.githubusercontent.com/fii-plataform/Forms-consulta/main/logovento%20(1).png" alt="Vento" style="width:34px;height:34px;object-fit:contain;">
+    <span class="brand-name">Vento</span>
+  </div>
+
+  <p class="eyebrow">Agendamento</p>
+  <h1>Vamos marcar sua <em>consulta</em></h1>
+  <p class="subcopy">Preencha seus dados abaixo. Confirmamos tudo pelo WhatsApp em instantes.</p>
+
+  <form id="bookingForm" novalidate>
+
+    <!-- honeypot: campo invisível — se vier preenchido, é bot -->
+    <div class="hp-field" aria-hidden="true">
+      <label for="website">Não preencha este campo</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="nome">Nome completo</label>
+      <input type="text" id="nome" name="nome" placeholder="Seu nome" required autocomplete="name">
+      <p class="error-msg" data-error-for="nome"></p>
+    </div>
+
+    <div class="field">
+      <label for="telefone">Telefone (WhatsApp, com DDD)</label>
+      <input type="tel" id="telefone" name="telefone" placeholder="(38) 99861-7565" required autocomplete="tel">
+      <p class="helper">Usamos esse número só para confirmar sua consulta pelo WhatsApp.</p>
+      <p class="error-msg" data-error-for="telefone"></p>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="data">Data desejada</label>
+        <input type="date" id="data" name="data" required>
+        <p class="error-msg" data-error-for="data"></p>
+      </div>
+      <div class="field">
+        <label for="hora">Horário</label>
+        <input type="time" id="hora" name="hora" required>
+        <p class="error-msg" data-error-for="hora"></p>
+      </div>
+    </div>
+
+    <button type="submit" id="submitBtn">Confirmar agendamento</button>
+    <p class="form-status" id="formStatus" role="status"></p>
+  </form>
+
+  <div class="success" id="successPanel">
+    <div class="check">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M5 13l4 4L19 7" stroke="#1F9E93" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h2>Pedido enviado!</h2>
+    <p>Recebemos seus dados. Em breve enviamos a confirmação pelo seu WhatsApp.</p>
+  </div>
+
+</div>
+
+<script>
+  // ======================================================
+  // CONFIGURAÇÃO DA INTEGRAÇÃO — preencha estes 2 valores
+  // ======================================================
+  // 1) URL definitiva do node Webhook no seu fluxo n8n (produção, não a de teste)
+  const N8N_WEBHOOK_URL = "https://n8n.ventoflow.top/webhook/93466551-2186-478b-87f4-50e6b111761e";
+  // 2) Uma chave secreta simples, qualquer string sua. Envie o MESMO valor
+  //    aqui e num node IF no n8n (checando o header x-vento-key) para
+  //    recusar requisições que não vieram do site.
+  const VENTO_API_KEY = "vento_7kQ3xR9mZp2Lw";
+  // ======================================================
+
+  const form = document.getElementById('bookingForm');
+  const statusEl = document.getElementById('formStatus');
+  const submitBtn = document.getElementById('submitBtn');
+  const successPanel = document.getElementById('successPanel');
+
+  function setFieldError(name, message){
+    const el = form.querySelector(`[data-error-for="${name}"]`);
+    if (el) el.textContent = message || '';
+  }
+
+  function onlyDigits(str){ return (str || '').replace(/\D/g, ''); }
+
+  function validate(data){
+    let ok = true;
+    ['nome','telefone','data','hora'].forEach(f => setFieldError(f, ''));
+
+    if (!data.nome.trim()){
+      setFieldError('nome', 'Informe seu nome.');
+      ok = false;
+    }
+
+    const digits = onlyDigits(data.telefone);
+    if (digits.length < 10){
+      setFieldError('telefone', 'Telefone incompleto — inclua DDD.');
+      ok = false;
+    }
+
+    if (!data.data){
+      setFieldError('data', 'Escolha uma data.');
+      ok = false;
+    }
+
+    if (!data.hora){
+      setFieldError('hora', 'Escolha um horário.');
+      ok = false;
+    }
+
+    return ok;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    statusEl.textContent = '';
+
+    const formData = new FormData(form);
+    const data = {
+      nome: formData.get('nome') || '',
+      telefone: formData.get('telefone') || '',
+      data: formData.get('data') || '',
+      hora: formData.get('hora') || '',
+      website: formData.get('website') || '' // honeypot
+    };
+
+    // se o honeypot veio preenchido, finge sucesso e não envia nada
+    if (data.website){
+      successPanel.classList.add('visible');
+      form.classList.add('hidden');
+      return;
+    }
+
+    if (!validate(data)) return;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const payload = {
+      paciente_nome: data.nome.trim(),
+      paciente_telefone: onlyDigits(data.telefone),
+      data_consulta: `${data.data}T${data.hora}:00`
+    };
+
+    try{
+      const res = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-vento-key': VENTO_API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error('Falha no envio');
+
+      form.classList.add('hidden');
+      successPanel.classList.add('visible');
+
+    }catch(err){
+      statusEl.textContent = 'Não conseguimos enviar agora. Tente novamente em instantes.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Confirmar agendamento';
+    }
+  });
+</script>
+
+</body>
+</html>
