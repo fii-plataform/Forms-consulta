@@ -105,24 +105,10 @@
     margin-bottom:28px;
   }
 
-  .brand svg{ width:34px; height:20px; }
-
   .brand-name{
     font-family:'Fraunces', serif;
     font-size:17px;
     letter-spacing:0.02em;
-  }
-
-  .wave-path{
-    stroke-dasharray:120;
-    stroke-dashoffset:120;
-    animation:draw 1.4s ease forwards 0.2s;
-  }
-  @media (prefers-reduced-motion: reduce){
-    .wave-path{ animation:none; stroke-dashoffset:0; }
-  }
-  @keyframes draw{
-    to{ stroke-dashoffset:0; }
   }
 
   .eyebrow{
@@ -182,9 +168,6 @@
     border-color:var(--teal);
     background:rgba(255,255,255,0.08);
   }
-  input:invalid:not(:placeholder-shown):not(:focus){
-    border-color:var(--error);
-  }
 
   .helper{
     font-size:12px;
@@ -199,7 +182,6 @@
     margin:0;
   }
 
-  /* honeypot — invisível para humanos, visível para bots */
   .hp-field{
     position:absolute;
     left:-9999px;
@@ -253,7 +235,6 @@
     color:var(--error);
   }
 
-  /* ---------- estado de sucesso ---------- */
   .success{
     display:none;
     flex-direction:column;
@@ -311,7 +292,6 @@
 
   <form id="bookingForm" novalidate>
 
-    <!-- honeypot: campo invisível — se vier preenchido, é bot -->
     <div class="hp-field" aria-hidden="true">
       <label for="website">Não preencha este campo</label>
       <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
@@ -366,24 +346,18 @@
 </div>
 
 <script>
-  // ======================================================
-  // CONFIGURAÇÃO DA INTEGRAÇÃO — preencha estes 2 valores
-  // ======================================================
-  // 1) URL definitiva do node Webhook no seu fluxo n8n (produção, não a de teste)
   const N8N_WEBHOOK_URL = "https://n8n.ventoflow.top/webhook/93466551-2186-478b-87f4-50e6b111761e";
-  // 2) Uma chave secreta simples, qualquer string sua. Envie o MESMO valor
-  //    aqui e num node IF no n8n (checando o header x-vento-key) para
-  //    recusar requisições que não vieram do site.
   const VENTO_API_KEY = "vento_7kQ3xR9mZp2Lw";
-  // ======================================================
+  const VERIFICAR_HORARIO_URL = "https://n8n.ventoflow.top/webhook/verificar-horario";
 
   const form = document.getElementById('bookingForm');
   const statusEl = document.getElementById('formStatus');
   const submitBtn = document.getElementById('submitBtn');
   const successPanel = document.getElementById('successPanel');
   const dataInput = document.getElementById('data');
+  const horaInput = document.getElementById('hora');
 
-  // Impede abrir o calendário numa data anterior a hoje (fuso do próprio navegador do paciente)
+  // Impede abrir o calendário numa data anterior a hoje
   (function setMinDate(){
     const now = new Date();
     const yyyy = now.getFullYear();
@@ -399,47 +373,46 @@
 
   function onlyDigits(str){ return (str || '').replace(/\D/g, ''); }
 
-  // Garante o DDI (55) na frente do número, caso o paciente não digite.
-  // 10 ou 11 dígitos = DDD + número, sem DDI ainda.
-  // 12 ou 13 dígitos = já veio com DDI.
   function withCountryCode(digits){
     if (digits.length === 10 || digits.length === 11){
       return '55' + digits;
     }
     return digits;
   }
-const VERIFICAR_HORARIO_URL = "https://n8n.ventoflow.top/webhook/verificar-horario";
-const horaInput = document.getElementById('hora');
 
-async function checarDisponibilidade(){
-  if (!dataInput.value || !horaInput.value) return;
+  // Checagem automática de disponibilidade ao alterar data ou hora
+  async function checarDisponibilidade(){
+    if (!dataInput.value || !horaInput.value) return;
 
-  const dataConsulta = `${dataInput.value}T${horaInput.value}:00-03:00`;
+    const dataConsulta = `${dataInput.value}T${horaInput.value}:00-03:00`;
 
-  setFieldError('hora', 'Verificando disponibilidade...');
-  submitBtn.disabled = true;
+    setFieldError('hora', 'Verificando disponibilidade...');
+    submitBtn.disabled = true;
 
-  try {
-    const url = `${VERIFICAR_HORARIO_URL}?data_consulta=${encodeURIComponent(dataConsulta)}`;
-    const res = await fetch(url);
-    const json = await res.json();
+    try {
+      const url = `${VERIFICAR_HORARIO_URL}?data_consulta=${encodeURIComponent(dataConsulta)}`;
+      const res = await fetch(url);
+      const json = await res.json();
 
-    if (json.disponivel) {
+      // Compatível tanto se o n8n retornar objeto único quanto lista/array
+      const disponivel = Array.isArray(json) ? json[0]?.disponivel : json.disponivel;
+
+      if (disponivel === true || disponivel === undefined) {
+        setFieldError('hora', '');
+        submitBtn.disabled = false;
+      } else {
+        setFieldError('hora', '⚠️ Esse horário já está ocupado. Escolha outro.');
+        submitBtn.disabled = true;
+      }
+    } catch (err) {
       setFieldError('hora', '');
-      submitBtn.disabled = false;
-    } else {
-      setFieldError('hora', 'Esse horário já está ocupado. Escolha outro.');
-      submitBtn.disabled = true;
+      submitBtn.disabled = false; // Se der erro de rede, libera para o banco barrar no insert se necessário
     }
-  } catch (err) {
-    setFieldError('hora', '');
-    submitBtn.disabled = false; // se der erro na checagem, deixa seguir — o índice do banco protege de qualquer jeito
   }
-}
 
-dataInput.addEventListener('change', checarDisponibilidade);
-horaInput.addEventListener('change', checarDisponibilidade);
-  
+  dataInput.addEventListener('change', checarDisponibilidade);
+  horaInput.addEventListener('change', checarDisponibilidade);
+
   function validate(data){
     let ok = true;
     ['nome','telefone','data','hora','consent'].forEach(f => setFieldError(f, ''));
@@ -492,10 +465,9 @@ horaInput.addEventListener('change', checarDisponibilidade);
       data: formData.get('data') || '',
       hora: formData.get('hora') || '',
       consent: formData.get('consent'),
-      website: formData.get('website') || '' // honeypot
+      website: formData.get('website') || ''
     };
 
-    // se o honeypot veio preenchido, finge sucesso e não envia nada
     if (data.website){
       successPanel.classList.add('visible');
       form.classList.add('hidden');
