@@ -458,10 +458,10 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
 
-    const payload = {
+   const payload = {
       paciente_nome: data.nome.trim(),
       paciente_telefone: withCountryCode(onlyDigits(data.telefone)),
-      data_consulta: `${data.data}T${data.hora}:00`
+      data_consulta: `${data.data}T${data.hora}:00-03:00`
     };
 
     try{
