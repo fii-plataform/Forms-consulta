@@ -422,12 +422,7 @@ async function checarDisponibilidade(){
   try {
     const url = `${VERIFICAR_HORARIO_URL}?data_consulta=${encodeURIComponent(dataConsulta)}`;
     const res = await fetch(url);
-
-    if (!res.ok) throw new Error('Resposta de erro do servidor');
-
     const json = await res.json();
-
-    if (typeof json.disponivel !== 'boolean') throw new Error('Resposta em formato inesperado');
 
     if (json.disponivel) {
       setFieldError('hora', '');
@@ -437,8 +432,8 @@ async function checarDisponibilidade(){
       submitBtn.disabled = true;
     }
   } catch (err) {
-    setFieldError('hora', ''); // limpa a mensagem, não trava o paciente por uma falha nossa
-    submitBtn.disabled = false;
+    setFieldError('hora', '');
+    submitBtn.disabled = false; // se der erro na checagem, deixa seguir — o índice do banco protege de qualquer jeito
   }
 }
 
