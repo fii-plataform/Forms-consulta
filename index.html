@@ -305,7 +305,7 @@
 
     <div class="field">
       <label for="telefone">Telefone (WhatsApp, com DDD)</label>
-      <input type="tel" id="telefone" name="telefone" placeholder="(38) 99861-7565" required autocomplete="tel">
+      <input type="tel" id="telefone" name="telefone" placeholder="(00) 00000-0000" required autocomplete="tel" inputmode="numeric" maxlength="15">
       <p class="helper">Usamos esse número só para confirmar sua consulta pelo WhatsApp.</p>
       <p class="error-msg" data-error-for="telefone"></p>
     </div>
@@ -356,6 +356,7 @@
   const successPanel = document.getElementById('successPanel');
   const dataInput = document.getElementById('data');
   const horaInput = document.getElementById('hora');
+  const telefoneInput = document.getElementById('telefone');
 
   // Impede abrir o calendário numa data anterior a hoje
   (function setMinDate(){
@@ -372,6 +373,31 @@
   }
 
   function onlyDigits(str){ return (str || '').replace(/\D/g, ''); }
+
+  // Formata (DD) 9XXXX-XXXX enquanto o usuário digita, travando em 11 dígitos
+  function formatarTelefone(digits){
+    digits = digits.slice(0, 11);
+    let out = '';
+    if (digits.length > 0) out += '(' + digits.slice(0, 2);
+    if (digits.length >= 2) out += ') ';
+    if (digits.length > 2) out += digits.slice(2, 7);
+    if (digits.length > 7) out += '-' + digits.slice(7, 11);
+    return out;
+  }
+
+  telefoneInput.addEventListener('input', () => {
+    const digits = onlyDigits(telefoneInput.value).slice(0, 11);
+    telefoneInput.value = formatarTelefone(digits);
+    setFieldError('telefone', '');
+  });
+
+  // Bloqueia colar texto com mais de 11 dígitos numéricos
+  telefoneInput.addEventListener('paste', (e) => {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData).getData('text');
+    const digits = onlyDigits(pasted).slice(0, 11);
+    telefoneInput.value = formatarTelefone(digits);
+  });
 
   function withCountryCode(digits){
     if (digits.length === 10 || digits.length === 11){
@@ -423,8 +449,8 @@
     }
 
     const digits = onlyDigits(data.telefone);
-    if (digits.length < 10 || digits.length > 13){
-      setFieldError('telefone', 'Telefone incompleto — inclua DDD.');
+    if (digits.length !== 11){
+      setFieldError('telefone', 'Informe o DDD + número, com 11 dígitos.');
       ok = false;
     }
 
