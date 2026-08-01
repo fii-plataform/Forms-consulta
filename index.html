@@ -408,7 +408,38 @@
     }
     return digits;
   }
+const VERIFICAR_HORARIO_URL = "https://n8n.ventoflow.top/webhook/verificar-horario";
+const horaInput = document.getElementById('hora');
 
+async function checarDisponibilidade(){
+  if (!dataInput.value || !horaInput.value) return;
+
+  const dataConsulta = `${dataInput.value}T${horaInput.value}:00-03:00`;
+
+  setFieldError('hora', 'Verificando disponibilidade...');
+  submitBtn.disabled = true;
+
+  try {
+    const url = `${VERIFICAR_HORARIO_URL}?data_consulta=${encodeURIComponent(dataConsulta)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.disponivel) {
+      setFieldError('hora', '');
+      submitBtn.disabled = false;
+    } else {
+      setFieldError('hora', 'Esse horário já está ocupado. Escolha outro.');
+      submitBtn.disabled = true;
+    }
+  } catch (err) {
+    setFieldError('hora', '');
+    submitBtn.disabled = false; // se der erro na checagem, deixa seguir — o índice do banco protege de qualquer jeito
+  }
+}
+
+dataInput.addEventListener('change', checarDisponibilidade);
+horaInput.addEventListener('change', checarDisponibilidade);
+  
   function validate(data){
     let ok = true;
     ['nome','telefone','data','hora','consent'].forEach(f => setFieldError(f, ''));
