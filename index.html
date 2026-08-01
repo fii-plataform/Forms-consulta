@@ -325,7 +325,7 @@
 
     <div class="field">
       <label for="telefone">Telefone (WhatsApp, com DDD)</label>
-      <input type="tel" id="telefone" name="telefone" placeholder="(38) 99861-7565" required autocomplete="tel">
+      <input type="tel" id="telefone" name="telefone" placeholder="(99) 99999-9999" required autocomplete="tel">
       <p class="helper">Usamos esse número só para confirmar sua consulta pelo WhatsApp.</p>
       <p class="error-msg" data-error-for="telefone"></p>
     </div>
@@ -389,6 +389,16 @@
 
   function onlyDigits(str){ return (str || '').replace(/\D/g, ''); }
 
+  // Garante o DDI (55) na frente do número, caso o paciente não digite.
+  // 10 ou 11 dígitos = DDD + número, sem DDI ainda.
+  // 12 ou 13 dígitos = já veio com DDI.
+  function withCountryCode(digits){
+    if (digits.length === 10 || digits.length === 11){
+      return '55' + digits;
+    }
+    return digits;
+  }
+
   function validate(data){
     let ok = true;
     ['nome','telefone','data','hora','consent'].forEach(f => setFieldError(f, ''));
@@ -399,7 +409,7 @@
     }
 
     const digits = onlyDigits(data.telefone);
-    if (digits.length < 10){
+    if (digits.length < 10 || digits.length > 13){
       setFieldError('telefone', 'Telefone incompleto — inclua DDD.');
       ok = false;
     }
@@ -450,7 +460,7 @@
 
     const payload = {
       paciente_nome: data.nome.trim(),
-      paciente_telefone: onlyDigits(data.telefone),
+      paciente_telefone: withCountryCode(onlyDigits(data.telefone)),
       data_consulta: `${data.data}T${data.hora}:00`
     };
 
