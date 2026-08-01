@@ -325,7 +325,7 @@
 
     <div class="field">
       <label for="telefone">Telefone (WhatsApp, com DDD)</label>
-      <input type="tel" id="telefone" name="telefone" placeholder="(99) 99999-9999" required autocomplete="tel">
+      <input type="tel" id="telefone" name="telefone" placeholder="(38) 99861-7565" required autocomplete="tel">
       <p class="helper">Usamos esse número só para confirmar sua consulta pelo WhatsApp.</p>
       <p class="error-msg" data-error-for="telefone"></p>
     </div>
@@ -381,6 +381,16 @@
   const statusEl = document.getElementById('formStatus');
   const submitBtn = document.getElementById('submitBtn');
   const successPanel = document.getElementById('successPanel');
+  const dataInput = document.getElementById('data');
+
+  // Impede abrir o calendário numa data anterior a hoje (fuso do próprio navegador do paciente)
+  (function setMinDate(){
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    dataInput.min = `${yyyy}-${mm}-${dd}`;
+  })();
 
   function setFieldError(name, message){
     const el = form.querySelector(`[data-error-for="${name}"]`);
@@ -424,6 +434,14 @@
       ok = false;
     }
 
+    if (data.data && data.hora){
+      const escolhido = new Date(`${data.data}T${data.hora}:00`);
+      if (escolhido.getTime() < Date.now()){
+        setFieldError('data', 'Escolha uma data e horário futuros.');
+        ok = false;
+      }
+    }
+
     if (!data.consent){
       setFieldError('consent', 'Você precisa concordar para agendar.');
       ok = false;
@@ -458,7 +476,7 @@
     submitBtn.disabled = true;
     submitBtn.textContent = 'Enviando...';
 
-   const payload = {
+    const payload = {
       paciente_nome: data.nome.trim(),
       paciente_telefone: withCountryCode(onlyDigits(data.telefone)),
       data_consulta: `${data.data}T${data.hora}:00-03:00`
